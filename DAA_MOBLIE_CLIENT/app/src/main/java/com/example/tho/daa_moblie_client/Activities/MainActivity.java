@@ -4,7 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
+import android.view.Menu;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -37,7 +37,9 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_ISSUER;
 import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_VERIFIER;
+import static com.example.tho.daa_moblie_client.Models.Utils.Utils.hexStringToByteArray;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -102,7 +104,6 @@ public class MainActivity extends AppCompatActivity {
 
         db.QueryData("INSERT OR REPLACE INTO info VALUES(1,'Thanh Uyen', 'Manager')");
 
-        url = "http://10.0.3.2:8080/issuer/";
 
 //        btnNonce.setOnClickListener(new View.OnClickListener() {
 //            @Override
@@ -135,27 +136,28 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
 
-        btnUser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getIdentity();
-                getSPIdentity();
-            }
-        });
-
-        btnSPB1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                signPermisstion();
-            }
-        });
-
-        btnUser_b1.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                verifyPermission();
-            }
-        });
+//        btnUser.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                getIdentity();
+//                //getSPIdentity();
+//            }
+//        });
+//
+//        btnSPB1.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                //signPermisstion();
+//                tam();
+//            }
+//        });
+//
+//        btnUser_b1.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                verifyPermission();
+//            }
+//        });
 
 
     }
@@ -169,14 +171,20 @@ public class MainActivity extends AppCompatActivity {
       //  unregisterReceiver(mReceiver);
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
     public void initView(){
         //View Init
 //        btnNonce = (Button) findViewById(R.id.btnGetNonce);
 //        btnVerify = (Button) findViewById(R.id.btnVerify);
 //        btnServiceCert = (Button) findViewById(R.id.btnSCert);
-        btnUser = (FButton) findViewById(R.id.btn_user_mode);
-        btnUser_b1 = (Button) findViewById(R.id.btn_user_ver);
-        btnSPB1 = (Button) findViewById(R.id.btn_service_sig);
+//        btnUser = (FButton) findViewById(R.id.btn_user_mode);
+//        btnUser_b1 = (Button) findViewById(R.id.btn_user_ver);
+//        btnSPB1 = (Button) findViewById(R.id.btn_service_sig);
        // sessionSP = Utils.hexStringToByteArray(Utils.createSessionID());
         sessionUser = Utils.createSessionID();
     }
@@ -189,12 +197,13 @@ public class MainActivity extends AppCompatActivity {
     // NEW META
 
     public void getIdentity(){
+        Log.d("clicked","xxx");
         Gson gson = new GsonBuilder()
                 .setLenient()
                 .create();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(url)
+                .baseUrl(URL_ISSUER)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
 
@@ -294,9 +303,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void tam(){
-        String sessionID = Utils.createSessionID();
-        String path = "getCert/"+Service_appID+"/"+sessionID;
-
+        final String sessionIDxx = Utils.createSessionID();
+        Log.d("UserSS", sessionIDxx);
+       // String path = "getCert/"+Service_appID+"/"+sessionID;
+        String path = "getCert/2/"+sessionIDxx;
 
         Gson gson = new GsonBuilder()
                     .setLenient()
@@ -316,26 +326,28 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<onlineCertData> call, Response<onlineCertData> response) {
                 onlineCertData data = response.body();
 
-                byte[] session = Utils.hexStringToByteArray(data.getSessionId()) ;
-                String sig = data.getSig();
+                Log.d("hahaha", data.getSig());
+                Log.d("permission", data.getPermission());
+                Log.d("status", data.getStatus());
+                Log.d("sessionID", data.getSessionId());
 
 
 
-                String message = data.getPermission();
+                Log.d("sessionIDUser", sessionIDxx);
 
-                Authenticator.EcDaaSignature sigX = null;
-                try {
-                    sigX = authenticator.EcDaaSignWrt(session,"permission", message);
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
 
-                try {
-                    boolean x = verifier.verifyWrt(Utils.hexStringToByteArray(message),session,sigX,Service_appID,ipk,null);
+//                    boolean x = verifyEcDaaSigWrt(ipk,data.getSig(),sessionIDxx,"permission"
+//                            ,data.getPermission().getBytes(),
+//                            sessionIDxx.getBytes());
+                    boolean x = VerifyUserInfo(sessionIDxx,data.getPermission(),data.getSig());
 
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
+                    if (x == true) {
+                        Log.d("verity at user", "Success" );
+                    }else{
+                        Log.d("verity at user", "Fail" );
+                    }
+
+
             }
 
             @Override
@@ -347,20 +359,29 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    public Boolean VerifyUserInfo(String serviceSessionId, String info, String sigString) {
+        Verifier verifier = new Verifier(curve);
+        // byte[] message
+        byte[] information = hexStringToByteArray(info);
+        // byte[] session
+        byte[] sessionId = hexStringToByteArray(serviceSessionId);
+        // EcDaaSignature sig
+        Authenticator.EcDaaSignature ecDaaSignature = new Authenticator.EcDaaSignature(hexStringToByteArray(sigString), sessionId, curve);
+        // String appId
+        String baseName = "permission";
+        // IssuerPublicKey ipk
+
+        Boolean resultVerify = false;
         try {
-            super.onActivityResult(requestCode, resultCode, data);
-
-            if (requestCode == QRActicity_REQUEST_CODE  && resultCode  == RESULT_OK) {
-
-                String requiredValue = Utils.handleQRContent(data.getStringExtra("QRContent"));
-            }
-        } catch (Exception ex) {
-            Toast.makeText(MainActivity.this, ex.toString(),
-                    Toast.LENGTH_SHORT).show();
+            resultVerify = verifier.verifyWrt(information, sessionId, ecDaaSignature, baseName, ipk, null);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
         }
+        System.out.println("Result Verify: "+resultVerify);
+        return resultVerify;
     }
+
+
 
     //user
 
@@ -391,9 +412,9 @@ public class MainActivity extends AppCompatActivity {
 
         Verifier ver  = new Verifier(curve);
         Authenticator.EcDaaSignature signature = new Authenticator.EcDaaSignature(
-                Utils.hexStringToByteArray(sig), message.getBytes(), curve);
+                hexStringToByteArray(sig), message.getBytes(), curve);
         //compare krd to session
-        return ver.verifyWrt(info, session, signature,basename , pk, null);
+        return ver.verifyWrt(info, session, signature, basename , pk, null);
     }
 
 
@@ -423,28 +444,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void test(){
-        BNCurve curve_test = new BNCurve(BNCurve.BNCurveInstantiation.valueOf(TPM_ECC_BN_P256));
-        Issuer issuer_test = null;
-
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
         try {
-            issuer_test = new Issuer(curve);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            super.onActivityResult(requestCode, resultCode, data);
+
+            if (requestCode == QRActicity_REQUEST_CODE  && resultCode  == RESULT_OK) {
+
+                String requiredValue = Utils.handleQRContent(data.getStringExtra("QRContent"));
+            }
+        } catch (Exception ex) {
+            Toast.makeText(MainActivity.this, ex.toString(),
+                    Toast.LENGTH_SHORT).show();
         }
-
-        Authenticator authenticator_test = null;
-
-        try {
-            authenticator_test = new Authenticator(curve_test,issuer_test.getPk());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-
-        SecureRandom random = new SecureRandom();
-       // BigInteger nonce = BNCurve.getRandomModOrder(random);
-
     }
+
 
 }
 

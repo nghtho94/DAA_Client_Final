@@ -8,9 +8,10 @@ public class Singleton {
 
     private static final String TPM_ECC_BN_P256 = "TPM_ECC_BN_P256";
     private static Singleton singleton = new Singleton();
-    private static IdentityData AnonymousIdentity;
     private static BNCurve curve;
     private static String sesssionID;
+    private static IdentityData identityData;
+
 
     /* A private Constructor prevents any other
      * class from instantiating.
@@ -24,11 +25,10 @@ public class Singleton {
 
     protected static void initData(){
         curve = new BNCurve(BNCurve.BNCurveInstantiation.valueOf(TPM_ECC_BN_P256));
+
+
     }
 
-    public static IdentityData getAnonymousIdentity() {
-        return AnonymousIdentity;
-    }
 
     public static BNCurve getCurve() {
         return curve;
@@ -40,6 +40,14 @@ public class Singleton {
 
     public static void setSesssionID(String sesssionID) {
         Singleton.sesssionID = sesssionID;
+    }
+
+    public static void setIdentityData(IdentityData identityData) {
+        Singleton.identityData = identityData;
+    }
+
+    public static IdentityData getIdentityData() {
+        return identityData;
     }
 
     /* Other methods protected by singleton-ness */

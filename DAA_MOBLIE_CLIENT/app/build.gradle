@@ -5,7 +5,7 @@ android {
     buildToolsVersion "24.0.2"
     defaultConfig {
         applicationId "com.example.tho.daa_moblie_client"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
@@ -51,4 +51,6 @@ dependencies {
     compile 'com.avast:android-styled-dialogs:2.3.3'
     compile 'com.roger.catloadinglibrary:catloadinglibrary:1.0.1'
     compile 'com.victor:lib:1.0.4'
+    compile 'com.mikhaellopez:circularimageview:3.0.2'
+    compile 'com.github.medyo:fancybuttons:1.8.3'
 }

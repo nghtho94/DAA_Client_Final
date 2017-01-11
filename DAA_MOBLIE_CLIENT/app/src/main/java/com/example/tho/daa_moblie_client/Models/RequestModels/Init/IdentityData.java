@@ -7,6 +7,9 @@ import com.google.gson.annotations.SerializedName;
 public class IdentityData {
 
 
+    @SerializedName("member_type")
+    @Expose
+    String member_type;
 
     @SerializedName("curve")
     @Expose
@@ -82,6 +85,52 @@ public class IdentityData {
     @Expose
     String credential_level_police;
 
+    @SerializedName("permission")
+    @Expose
+    String permission;
+
+    @SerializedName("gsk_permission")
+    @Expose
+    String gsk_permission;
+
+    @SerializedName("epk_permission")
+    @Expose
+    String epk_permission;
+
+    @SerializedName("esk_permission")
+    @Expose
+    String esk_permission;
+
+    @SerializedName("credential_permission")
+    @Expose
+    String credential_permission;
+
+
+
+    @SerializedName("level_1")
+    @Expose
+    String level_1;
+
+    @SerializedName("esk_level_1")
+    @Expose
+    String esk_level_1;
+
+    @SerializedName("epk_level_1")
+    @Expose
+    String epk_level_1;
+
+    @SerializedName("gsk_level_1")
+    @Expose
+    String gsk_level_1;
+
+    @SerializedName("credential_level_1")
+    @Expose
+    String credential_level_1;
+
+
+
+
+
     public String getIpk() {
         return ipk;
     }
@@ -152,6 +201,50 @@ public class IdentityData {
 
     public String getLevel_service() {
         return level_service;
+    }
+
+    public String getPermission() {
+        return permission;
+    }
+
+    public String getGsk_permission() {
+        return gsk_permission;
+    }
+
+    public String getCredential_level_1() {
+        return credential_level_1;
+    }
+
+    public String getCredential_permission() {
+        return credential_permission;
+    }
+
+    public String getEpk_level_1() {
+        return epk_level_1;
+    }
+
+    public String getEpk_permission() {
+        return epk_permission;
+    }
+
+    public String getEsk_level_1() {
+        return esk_level_1;
+    }
+
+    public String getEsk_permission() {
+        return esk_permission;
+    }
+
+    public String getGsk_level_1() {
+        return gsk_level_1;
+    }
+
+    public String getLevel_1() {
+        return level_1;
+    }
+
+    public String getMember_type() {
+        return member_type;
     }
 }
 

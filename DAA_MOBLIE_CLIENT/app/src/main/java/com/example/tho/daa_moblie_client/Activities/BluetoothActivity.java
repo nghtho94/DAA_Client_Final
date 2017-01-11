@@ -91,7 +91,7 @@ public class BluetoothActivity extends AppCompatActivity {
         //Initdata
 
         curve = singleton.getCurve();
-        identityData = singleton.getAnonymousIdentity();
+       // identityData = singleton.getAnonymousIdentity();
 
 
         mSendButton = (Button) findViewById(R.id.mSendButton);
@@ -168,7 +168,7 @@ public class BluetoothActivity extends AppCompatActivity {
 //                    sendMessage(message);
 //                }
 
-                sendMessage("Dit me may");
+                sendMessage("xxx");
             }
         });
 

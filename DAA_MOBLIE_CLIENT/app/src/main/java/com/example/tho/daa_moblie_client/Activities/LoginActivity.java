@@ -5,20 +5,37 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.dd.CircularProgressButton;
+import com.example.tho.daa_moblie_client.Controller.Singleton;
+import com.example.tho.daa_moblie_client.Interfaces.IdentityDownload;
+import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.R;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_ISSUER;
 
 public class LoginActivity extends AppCompatActivity {
+
+    private final String TAG = "LoginActivity";
 
     SharedPreferences mPrefs = getPreferences(MODE_PRIVATE);
 
     //View
     CircularProgressButton circularProgressButton;
     EditText password;
+    Singleton singleton = Singleton.getInstance();
 
 
     @Override
@@ -72,12 +89,8 @@ public class LoginActivity extends AppCompatActivity {
                                 // Do something after 5s = 5000ms
                                 circularProgressButton.setProgress(100);
 
-                                //
-                                Intent i = new Intent(LoginActivity.this, MainActivity.class);
-                                startActivity(i);
-
-                                //Close Activity
-                                finish();
+                                //Prepare Data and go to Main screen;
+                                prepareData();
                             }
                         }, 300);
                     }
@@ -113,5 +126,61 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 
+    }
+
+    public void prepareData(){
+        String json = mPrefs.getString("AnoID","");
+
+        if ( json == null){
+            downloadIdentityData();
+        }else{
+            Gson gson = new Gson();
+            IdentityData identityData = gson.fromJson(json, IdentityData.class);
+            singleton.setIdentityData(identityData);
+        }
+    }
+
+    public void downloadIdentityData(){
+        Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(URL_ISSUER)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+
+        IdentityDownload service = retrofit.create(IdentityDownload.class);
+
+        Call<IdentityData> call = service.downloadFile(1);
+
+        call.enqueue(new Callback<IdentityData>() {
+            @Override
+            public void onResponse(Call<IdentityData> call, Response<IdentityData> response) {
+                IdentityData identity_Data = response.body();
+                //initData();
+                Log.d("identity", identity_Data.getCredential_level_bank());
+                singleton.setIdentityData(identity_Data);
+                Log.d(TAG+"Ano", "Success");
+
+                //Go to main screen
+                gotoMainScreen();
+            }
+
+            @Override
+            public void onFailure(Call<IdentityData> call, Throwable t) {
+                Log.d(TAG, "onResponse" + t.getMessage());
+            }
+        });
+
+    }
+
+    public void gotoMainScreen(){
+        //
+        Intent i = new Intent(LoginActivity.this, MainActivity.class);
+        startActivity(i);
+
+        //Close Activity
+        finish();
     }
 }
