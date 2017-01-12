@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -31,6 +32,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
 import info.hoang8f.widget.FButton;
+import mehdi.sakout.fancybuttons.FancyButton;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -75,7 +77,9 @@ public class MainActivity extends AppCompatActivity {
     //Views
     Button btnUser_b1, btnSPB1 , btnServiceCert;
 
-    FButton btnUser ;
+    FButton btn_Authentication ;
+    FancyButton btn_Profile;
+
 
 
     @Override
@@ -158,6 +162,19 @@ public class MainActivity extends AppCompatActivity {
 //                verifyPermission();
 //            }
 //        });
+         btn_Authentication.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
+                // getIdentity();
+             }
+         });
+
+        btn_Profile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+              //  tam();
+            }
+        });
 
 
     }
@@ -179,6 +196,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void initView(){
         //View Init
+        btn_Authentication = (FButton) findViewById(R.id.btn_authenticate);
+        btn_Profile = (FancyButton) findViewById(R.id.btn_main_profile);
 //        btnNonce = (Button) findViewById(R.id.btnGetNonce);
 //        btnVerify = (Button) findViewById(R.id.btnVerify);
 //        btnServiceCert = (Button) findViewById(R.id.btnSCert);
@@ -197,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
     // NEW META
 
     public void getIdentity(){
-        Log.d("clicked","xxx");
+
         Gson gson = new GsonBuilder()
                 .setLenient()
                 .create();
@@ -209,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
 
         IdentityDownload service = retrofit.create(IdentityDownload.class);
 
-        Call<IdentityData> call = service.downloadFile(1);
+        Call<IdentityData> call = service.downloadFile(6);
 
         call.enqueue(new Callback<IdentityData>() {
             @Override
@@ -306,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
         final String sessionIDxx = Utils.createSessionID();
         Log.d("UserSS", sessionIDxx);
        // String path = "getCert/"+Service_appID+"/"+sessionID;
-        String path = "getCert/2/"+sessionIDxx;
+        String path = "getCert/7/"+sessionIDxx;
 
         Gson gson = new GsonBuilder()
                     .setLenient()
