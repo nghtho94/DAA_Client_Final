@@ -56,16 +56,18 @@
             android:name=".Activities.HelpActivity"
             android:configChanges="orientation"
             android:screenOrientation="portrait" />
-        <activity android:name=".Activities.BluetoothActivity" />
-        <activity android:name=".Activities.DeviceListActivity" />
-        <activity android:name=".Activities.LoginActivity" />
-        <activity android:name=".Activities.SettingActivity"
-            android:label="Setting">
+        <activity android:name=".Activities.BluetoothActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".Activities.DeviceListActivity" />
+        <activity android:name=".Activities.LoginActivity" />
+        <activity android:name=".Activities.SettingActivity"
+            android:label="Setting">
+
         </activity>
     </application>
 

@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 
+
 public class Verifier {
     private BNCurve curve;
     public static String JSON_REVOCATION_LIST = "RogueList";
@@ -84,7 +85,27 @@ public class Verifier {
         else return success;
     }
 
-
+    /**
+     * Turns a revocation list as a set of big integers into a JSON object
+     * @param revocationList The revocation list as a Set<BigInteger>
+     * @param curve The curve used
+     * @return The revocation list as a JSON object
+//     */
+//    public static String revocationListToJson(Set<BigInteger> revocationList, BNCurve curve) {
+//        StringBuilder sb = new StringBuilder();
+//        Base64.Encoder encoder = Base64.getUrlEncoder();
+//
+//        sb.append("{\"" + JSON_REVOCATION_LIST + "\":[");
+//
+//        StringJoiner sj = new StringJoiner(",");
+//        for(BigInteger revoked : revocationList) {
+//            sj.add("{\"" + JSON_REVOCATION_LIST_ENTRY + "\":\"" + encoder.encodeToString(curve.bigIntegerToB(revoked)) + "\"}");
+//        }
+//        sb.append(sj.toString());
+//        sb.append("]}");
+//
+//        return sb.toString();
+//    }
 
     /**
      * Turns a revocation list as JSON object into a set of big integers

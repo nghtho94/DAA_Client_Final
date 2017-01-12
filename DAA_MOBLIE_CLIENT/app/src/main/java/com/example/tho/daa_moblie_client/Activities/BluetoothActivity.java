@@ -25,6 +25,7 @@ import android.widget.Toast;
 import com.example.tho.daa_moblie_client.Controller.BluetoothService;
 import com.example.tho.daa_moblie_client.Controller.Constants;
 import com.example.tho.daa_moblie_client.Controller.Singleton;
+import com.example.tho.daa_moblie_client.Interfaces.IdentityDownload;
 import com.example.tho.daa_moblie_client.Models.DAA.Authenticator;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer;
 import com.example.tho.daa_moblie_client.Models.DAA.Verifier;
@@ -32,12 +33,22 @@ import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.Models.Utils.Utils;
 import com.example.tho.daa_moblie_client.Models.crypto.BNCurve;
 import com.example.tho.daa_moblie_client.R;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_ISSUER;
 
 public class BluetoothActivity extends AppCompatActivity {
 
@@ -51,7 +62,7 @@ public class BluetoothActivity extends AppCompatActivity {
     // Layout Views
     private ListView mConversationView;
     private EditText mOutEditText;
-    private Button mSendButton;
+    private Button mSendButton, getData;
 
     /**
      * Name of the connected device
@@ -82,6 +93,7 @@ public class BluetoothActivity extends AppCompatActivity {
     Singleton singleton = Singleton.getInstance();
     BNCurve curve = null;
     IdentityData identityData = null;
+    String TPM_ECC_BN_P256 = "TPM_ECC_BN_P256";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,11 +102,12 @@ public class BluetoothActivity extends AppCompatActivity {
 
         //Initdata
 
-        curve = singleton.getCurve();
+        curve = new BNCurve(BNCurve.BNCurveInstantiation.valueOf(TPM_ECC_BN_P256));
        // identityData = singleton.getAnonymousIdentity();
 
 
         mSendButton = (Button) findViewById(R.id.mSendButton);
+        getData = (Button) findViewById(R.id.btnGetDataBlue);
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -103,10 +116,53 @@ public class BluetoothActivity extends AppCompatActivity {
             Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
             this.finish();
         }
+
+        //TEST
+        getData.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                downloadIdentityData();
+            }
+        });
+    }
+
+    public void downloadIdentityData() {
+        Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(URL_ISSUER)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+
+        IdentityDownload service = retrofit.create(IdentityDownload.class);
+
+        Call<IdentityData> call = service.downloadFile(1);
+
+        call.enqueue(new Callback<IdentityData>() {
+            @Override
+            public void onResponse(Call<IdentityData> call, Response<IdentityData> response) {
+                IdentityData identity_Data = response.body();
+                //initData();
+                Log.d("identity", identity_Data.getCredential_level_bank());
+                singleton.setIdentityData(identity_Data);
+                Log.d(TAG + "Ano", "Success");
+                identityData = identity_Data;
+
+            }
+
+            @Override
+            public void onFailure(Call<IdentityData> call, Throwable t) {
+                Log.d(TAG, "onResponse" + t.getMessage());
+            }
+        });
     }
 
 
-    @Override
+
+
+        @Override
     public void onStart() {
         super.onStart();
         // If BT is not on, request that it be enabled.
@@ -168,7 +224,20 @@ public class BluetoothActivity extends AppCompatActivity {
 //                    sendMessage(message);
 //                }
 
-                sendMessage("xxx");
+                singleton.setSesssionID(Utils.createSessionID());
+                Log.d(TAG, "sID" + singleton.getSesssionID());
+
+                JSONObject jsonInput = new JSONObject();
+                try {
+                    jsonInput.put("state", "sessionID");
+                    jsonInput.put("sessionID", singleton.getSesssionID());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Toast.makeText(BluetoothActivity.this, "Send", Toast.LENGTH_SHORT);
+                Log.d("Data", jsonInput.toString());
+                sendMessage(jsonInput.toString());
             }
         });
 
@@ -294,6 +363,8 @@ public class BluetoothActivity extends AppCompatActivity {
                     // construct a string from the valid bytes in the buffer
                     String readMessage = new String(readBuf, 0, msg.arg1);
 
+                    Log.d("message", readMessage);
+                    Toast.makeText(BluetoothActivity.this, readMessage, Toast.LENGTH_LONG).show();
                     try {
                         messageHandle(readMessage);
                     } catch (JSONException e) {
@@ -307,6 +378,18 @@ public class BluetoothActivity extends AppCompatActivity {
 
                         Toast.makeText(BluetoothActivity.this, "Connected to "
                                 + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
+
+                        //******************* TEST
+
+                        String type = msg.getData().getString("secure");
+                        if (type == "Secure") {
+                            mChatService.tho();
+                            String address = mConnectedDeviceName;
+                            // Get the BluetoothDevice object
+                            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+                            // Attempt to connect to the device
+                            mChatService.connect(device, false);
+                        }
                     }
                     break;
                 case Constants.MESSAGE_TOAST:
@@ -418,9 +501,12 @@ public class BluetoothActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
+
+
                 if (temp == true) {
 
                     //get Info from permisson
+                    Log.d("Verify", "OK");
                     String info = identityData.getLevel_bank();
 
                     //CreateSig
@@ -449,6 +535,8 @@ public class BluetoothActivity extends AppCompatActivity {
                     sendMessage(jsonInput.toString());
 
                 } else {
+
+                    Log.d("Verify", "Fail");
                     //If verify fail set sessionID = null
                     singleton.setSesssionID(null);
                     JSONObject jsonInput = new JSONObject();
@@ -459,21 +547,25 @@ public class BluetoothActivity extends AppCompatActivity {
                     }
 
                     //send message
-                    sendMessage(jsonInput.toString());
+                    //sendMessage(jsonInput.toString());
                 }
 
-
+                break;
             case "CANCEL":
                 singleton.setSesssionID(null);
                 Toast.makeText(this, "Xác thực thất bại",
                         Toast.LENGTH_SHORT).show();
                 break;
+            case "SUCCESS":
+                Toast.makeText(this, "Xác thực thành công",
+                        Toast.LENGTH_SHORT).show();
 
 
         }
 
     }
 
+    //VERRIFY
     private boolean verifyEcDaaSigWrt(Issuer.IssuerPublicKey pk, String sig, String message, String basename,
                                       byte[] info, byte[] session) throws NoSuchAlgorithmException {
 
@@ -484,6 +576,8 @@ public class BluetoothActivity extends AppCompatActivity {
         return ver.verifyWrt(info, session, signature, basename, pk, null);
     }
 
+
+    //CREATE SIG
     private Authenticator.EcDaaSignature createSig(String info, String cre, String gsk, String sid, String basename, String ipkString) {
         try {
             Issuer.IssuerPublicKey ipk = new Issuer.IssuerPublicKey(curve, ipkString);

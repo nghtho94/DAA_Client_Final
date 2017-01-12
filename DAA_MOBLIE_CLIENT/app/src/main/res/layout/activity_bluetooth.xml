@@ -18,4 +18,15 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="151dp"
         android:id="@+id/mSendButton" />
+
+    <Button
+        android:text="getData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/mSendButton"
+        android:layout_alignStart="@+id/mSendButton"
+        android:layout_marginTop="38dp"
+        android:id="@+id/btnGetDataBlue" />
+
+
 </RelativeLayout>

@@ -37,14 +37,14 @@ import iaik.security.ec.math.curve.ECPoint;
  *
  */
 public class Authenticator {
-	public  BigInteger sk;
+	private BigInteger sk;
 	private ECPoint Q; // authenticator public key
 	private SecureRandom random;
 	private BNCurve curve;
 	private IssuerPublicKey issuerPk;
 
 	public enum JoinState {NOT_JOINED, IN_PROGRESS, JOINED};
-	public JoinState joinState;
+	private JoinState joinState;
 
 	public void setJoinState(JoinState joinState) {
 		this.joinState = joinState;
@@ -71,9 +71,21 @@ public class Authenticator {
 			if(!sk.mod(this.curve.getOrder()).equals(sk)) {
 				throw new IllegalArgumentException("The sk must be between zero and the group order.");
 			}
+
 		}
 		this.Q = this.curve.getG1().multiplyPoint(this.sk);
-		this.joinState = JoinState.NOT_JOINED;
+		if(sk ==null){
+			this.joinState = JoinState.NOT_JOINED;
+		}
+		else this.joinState = JoinState.IN_PROGRESS;
+	}
+
+	public BigInteger getSk() {
+		return sk;
+	}
+
+	public void setSk(BigInteger sk) {
+		this.sk = sk;
 	}
 
 	/**
@@ -172,15 +184,15 @@ public class Authenticator {
 		success &= this.curve.pair(message.a, this.issuerPk.Y).equals(this.curve.pair(message.b, this.curve.getG2()));
 		success &= this.curve.pair(message.c, this.curve.getG2()).equals(this.curve.pair(message.a.clone().addPoint(message.d.multiplyPoint(l)), this.issuerPk.X));
 
-
-		if(success) {
-			// Store the credential
-			this.a = message.a;
-			this.b = message.b;
-			this.c = message.c;
-			this.d = message.d;
-			this.joinState = JoinState.JOINED;
-		}
+		//an attacker can remove this , let check
+		//if(success) {
+		// Store the credential
+		this.a = message.a;
+		this.b = message.b;
+		this.c = message.c;
+		this.d = message.d;
+		this.joinState = JoinState.JOINED;
+		//}
 
 		return success;
 	}
@@ -223,25 +235,24 @@ public class Authenticator {
 		BigInteger s2 = r2.add(c2.multiply(this.sk).mod(this.curve.getOrder())).mod(this.curve.getOrder());
 		return new EcDaaSignature(r, s, t, w, c2, s2, krd);
 	}
-
 	public EcDaaSignature EcDaaSignWithNym(String basename, String message, String seed) throws NoSuchAlgorithmException{
 		EcDaaSignature ecdaaSIg = EcDaaSign(basename, message);
 		byte[] bytes = BNCurve.mergeByteArrays(
 				seed.getBytes(),
 				this.sk.toByteArray()
 		);
-		byte[] hashcode = MD5Helper.hashBytesToByte(bytes);
-		ecdaaSIg.nym = hashcode;
+		byte[] hash = MD5Helper.hashBytesToByte(bytes);
+		ecdaaSIg.nym = hash;
 		return ecdaaSIg;
 	}
-	public EcDaaSignature EcDaaSignWrt(byte[] session ,String basename, String message ) throws NoSuchAlgorithmException {
+	public EcDaaSignature EcDaaSignWrt(byte[] info ,String basename, String message ) throws NoSuchAlgorithmException {
 		if(this.joinState != JoinState.JOINED){
 			throw new IllegalStateException("The authenticator must join before it can sign");
 		}
 
 		//byte[] krd = this.buildAndEncodeKRD();
 		byte[] krd = message.getBytes();
-		BigInteger h = this.curve.hashModOrder(session);
+		BigInteger h = this.curve.hashModOrder(info);
 		// Randomize the credential
 		BigInteger l = this.curve.getRandomModOrder(random);
 		//BigInteger l = this.curve.hashModOrder(session);
@@ -263,7 +274,6 @@ public class Authenticator {
 		return new EcDaaSignature(r, s, t, w.multiplyPoint(l), c2, s2, krd);
 	}
 
-
 	/**
 	 * Data type holding ECDAA signatures
 	 * @author manudrijvers
@@ -275,6 +285,7 @@ public class Authenticator {
 		public final byte[] krd;
 		//nym implementation
 		public byte[] nym;
+
 		public EcDaaSignature(ECPoint r, ECPoint s, ECPoint t, ECPoint w, BigInteger c2, BigInteger s2, byte[] krd) {
 			this.r = r;
 			this.s = s;
@@ -284,6 +295,7 @@ public class Authenticator {
 			this.s2 = s2;
 			this.krd = krd;
 		}
+
 
 		public EcDaaSignature(byte[] encoded, byte[] krd, BNCurve curve) {
 			if(encoded.length != 10*curve.byteLength()+4) {
@@ -311,8 +323,15 @@ public class Authenticator {
 					curve.point1ToBytes(this.r),
 					curve.point1ToBytes(this.s),
 					curve.point1ToBytes(this.t),
-					curve.point1ToBytes(this.w));
+					curve.point1ToBytes(this.w)
+			);
 		}
+		/**
+		 * encode signature with nymvalue , use for linkability
+		 * @param curve
+		 * @return
+		 */
+
 		public byte[] encodeWithNym(BNCurve curve) {
 			return BNCurve.mergeByteArrays(
 					curve.bigIntegerToB(this.c2),
@@ -380,6 +399,5 @@ public class Authenticator {
 			result = 31 * result + this.krd.hashCode();
 			return result;
 		}
-
 	}
 }
