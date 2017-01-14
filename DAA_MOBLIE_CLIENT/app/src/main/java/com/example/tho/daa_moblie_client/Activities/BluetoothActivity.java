@@ -22,6 +22,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.avast.android.dialogs.iface.IDateDialogListener;
+import com.avast.android.dialogs.iface.IListDialogListener;
+import com.avast.android.dialogs.iface.IMultiChoiceListDialogListener;
+import com.avast.android.dialogs.iface.ISimpleDialogCancelListener;
+import com.avast.android.dialogs.iface.ISimpleDialogListener;
+import com.example.tho.daa_moblie_client.CheckBoxView.library.SmoothCheckBox;
 import com.example.tho.daa_moblie_client.Controller.BluetoothService;
 import com.example.tho.daa_moblie_client.Controller.Constants;
 import com.example.tho.daa_moblie_client.Controller.Singleton;
@@ -41,6 +47,7 @@ import org.json.JSONObject;
 
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -50,7 +57,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_ISSUER;
 
-public class BluetoothActivity extends AppCompatActivity {
+public class BluetoothActivity extends AppCompatActivity implements
+        ISimpleDialogListener,
+        IDateDialogListener,
+        ISimpleDialogCancelListener,
+        IListDialogListener,
+        IMultiChoiceListDialogListener {
 
     private static final String TAG = "BluetoothActivity";
 
@@ -124,6 +136,22 @@ public class BluetoothActivity extends AppCompatActivity {
                 downloadIdentityData();
             }
         });
+
+
+        final SmoothCheckBox scb = (SmoothCheckBox) findViewById(R.id.scb);
+
+        scb.setOnCheckedChangeListener(new SmoothCheckBox.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(SmoothCheckBox checkBox, boolean isChecked) {
+                Log.d("SmoothCheckBox", String.valueOf(isChecked));
+
+                Intent intent = new Intent(BluetoothActivity.this,QRScan.class);
+                startActivity(intent);
+                scb.setVisibility(View.INVISIBLE);
+            }
+        });
+
+
     }
 
     public void downloadIdentityData() {
@@ -237,7 +265,9 @@ public class BluetoothActivity extends AppCompatActivity {
                 }
                 Toast.makeText(BluetoothActivity.this, "Send", Toast.LENGTH_SHORT);
                 Log.d("Data", jsonInput.toString());
-                sendMessage(jsonInput.toString());
+                //sendMessage(jsonInput.toString());
+
+                sendMessage("xxx");
             }
         });
 
@@ -601,5 +631,53 @@ public class BluetoothActivity extends AppCompatActivity {
 
         }
 
+    }
+
+
+    //Dialog
+    private static final int REQUEST_SIMPLE_DIALOG = 42;
+    @Override
+    public void onPositiveButtonClicked(int requestCode, Date date) {
+        //Toast.makeText(this,"cc",Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onNegativeButtonClicked(int requestCode, Date date) {
+        // Toast.makeText(this,"cc",Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onListItemSelected(CharSequence value, int number, int requestCode) {
+
+    }
+
+    @Override
+    public void onListItemsSelected(CharSequence[] values, int[] selectedPositions, int requestCode) {
+
+    }
+
+    @Override
+    public void onCancelled(int requestCode) {
+
+    }
+
+    @Override
+    public void onNegativeButtonClicked(int requestCode) {
+        if (requestCode == REQUEST_SIMPLE_DIALOG) {
+            Toast.makeText(this, "Negative button clicked", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    public void onNeutralButtonClicked(int requestCode) {
+
+    }
+
+    @Override
+    public void onPositiveButtonClicked(int requestCode) {
+
+        if (requestCode == REQUEST_SIMPLE_DIALOG) {
+            Toast.makeText(this, "Positive button clicked", Toast.LENGTH_SHORT).show();
+        }
     }
 }

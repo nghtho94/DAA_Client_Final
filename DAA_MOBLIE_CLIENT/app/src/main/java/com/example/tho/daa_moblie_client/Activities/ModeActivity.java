@@ -19,8 +19,7 @@ import mehdi.sakout.fancybuttons.FancyButton;
 public class ModeActivity extends AppCompatActivity {
     public final String TAG = "Mode";
     // Intent request codes
-    private static final int REQUEST_CONNECT_DEVICE_SECURE = 1;
-    private static final int REQUEST_CONNECT_DEVICE_INSECURE = 2;
+
     private static final int REQUEST_ENABLE_BT = 3;
 
     FancyButton btnOnline , btnOffline;
@@ -51,6 +50,8 @@ public class ModeActivity extends AppCompatActivity {
                 offline();
             }
         });
+
+
     }
 
     public void initView(){
@@ -63,6 +64,10 @@ public class ModeActivity extends AppCompatActivity {
 
         if (CheckInternet.isConnected(ModeActivity.this) == true){
             //go to QRScan
+
+            Intent i = new Intent(ModeActivity.this, QRScan.class);
+            startActivity(i);
+            finish();
 
         }else{
             Toast.makeText(ModeActivity.this, "Wifi not connected. Try again.", Toast.LENGTH_LONG).show();

@@ -28,7 +28,8 @@
         android:layout_gravity="center_horizontal"/>
 
     <TextView
-        android:text="Bob"
+
+
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
@@ -107,14 +108,15 @@
         android:gravity="center" >
 
         <mehdi.sakout.fancybuttons.FancyButton
-            android:id="@+id/btn_android"
+            android:id="@+id/btn_newCre"
             android:layout_width="90dp"
             android:layout_height="90dp"
             android:layout_marginRight="10dp"
             android:padding="10dp"
             fancy:fb_defaultColor="#55acee"
             fancy:fb_focusColor="#313131"
-            fancy:fb_fontIconResource="&#xf0f6;"
+            fancy:fb_fontIconResource="&#xf021;"
+            fancy:fb_fontIconSize = "40dp"
             fancy:fb_iconPaddingLeft="0dp"
             fancy:fb_iconPaddingRight="0dp"
             fancy:fb_radius="90dp"
@@ -122,7 +124,7 @@
             fancy:fb_textColor="#FFFFFF" />
 
         <mehdi.sakout.fancybuttons.FancyButton
-            android:id="@+id/btn_dropbox"
+            android:id="@+id/btn_Log"
             android:layout_width="90dp"
             android:layout_height="90dp"
             android:layout_marginRight="10dp"
@@ -138,7 +140,7 @@
         </mehdi.sakout.fancybuttons.FancyButton>
 
         <mehdi.sakout.fancybuttons.FancyButton
-            android:id="@+id/btn_gplus"
+            android:id="@+id/btn_LogOut"
             android:layout_width="90dp"
             android:layout_height="90dp"
             android:layout_marginRight="10dp"
@@ -147,7 +149,9 @@
             fancy:fb_iconPaddingLeft="0dp"
             fancy:fb_iconPaddingRight="0dp"
             fancy:fb_focusColor="#313131"
-            fancy:fb_fontIconResource="&#xf0f6;"
+            fancy:fb_fontIconResource="&#xf08b;"
+            fancy:fb_fontIconSize = "40dp"
+            fancy:fb_text=""
             fancy:fb_radius="90dp">
         </mehdi.sakout.fancybuttons.FancyButton>
     </LinearLayout>

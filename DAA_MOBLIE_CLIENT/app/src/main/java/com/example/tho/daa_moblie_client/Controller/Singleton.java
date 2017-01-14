@@ -23,12 +23,11 @@ public class Singleton {
         return singleton;
     }
 
-    protected static void initData(){
-        curve = new BNCurve(BNCurve.BNCurveInstantiation.valueOf(TPM_ECC_BN_P256));
 
 
+    public static void setCurve(BNCurve curve) {
+        Singleton.curve = curve;
     }
-
 
     public static BNCurve getCurve() {
         return curve;

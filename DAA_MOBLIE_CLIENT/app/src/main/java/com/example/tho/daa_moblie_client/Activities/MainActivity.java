@@ -1,35 +1,38 @@
 package com.example.tho.daa_moblie_client.Activities;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.tho.daa_moblie_client.Controller.Singleton;
 import com.example.tho.daa_moblie_client.Interfaces.IdentityDownload;
-import com.example.tho.daa_moblie_client.Interfaces.IdentitySPAPI;
-import com.example.tho.daa_moblie_client.Interfaces.onlineCertAPI;
 import com.example.tho.daa_moblie_client.Models.DAA.Authenticator;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer.IssuerPublicKey;
-import com.example.tho.daa_moblie_client.Models.DAA.Issuer.JoinMessage1;
 import com.example.tho.daa_moblie_client.Models.DAA.Verifier;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentitySPData;
-import com.example.tho.daa_moblie_client.Models.ResponseData.onlineCertData;
 import com.example.tho.daa_moblie_client.Models.Utils.Utils;
 import com.example.tho.daa_moblie_client.Models.crypto.BNCurve;
 import com.example.tho.daa_moblie_client.R;
-import com.example.tho.daa_moblie_client.SQLite.SQLite;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.kaopiz.kprogresshud.KProgressHUD;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 import info.hoang8f.widget.FButton;
 import mehdi.sakout.fancybuttons.FancyButton;
@@ -40,30 +43,21 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_ISSUER;
-import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_VERIFIER;
 import static com.example.tho.daa_moblie_client.Models.Utils.Utils.hexStringToByteArray;
 
 public class MainActivity extends AppCompatActivity {
 
+    private final String TAG = "MainActivity";
     //Define
     public static final Integer QRActicity_REQUEST_CODE = 1;
 
-
-    // Crypto
-    private Authenticator authenticator;
-    private SecureRandom random;
-    private Verifier verifier;
     private BNCurve curve;
-    private JoinMessage1 mgs1;
-    private final String TPM_ECC_BN_P256 = "TPM_ECC_BN_P256";
-    private String url;
-    private IssuerPublicKey ipk;
-    private Issuer.JoinMessage2 mgs2;
-    private BigInteger gsk;
-    private String Service_appID;
 
-    private String nonceString;
-    private SQLite db;
+    private final String TPM_ECC_BN_P256 = "TPM_ECC_BN_P256";
+
+    private IssuerPublicKey ipk;
+
+
     IdentityData identity_Data;
     IdentitySPData identity_sp_data;
     String sessionUser, sessionSP;
@@ -79,6 +73,13 @@ public class MainActivity extends AppCompatActivity {
 
     FButton btn_Authentication ;
     FancyButton btn_Profile;
+    FancyButton btn_NewCre;
+    FancyButton btn_Log;
+    FancyButton btnLogout;
+    TextView txtname;
+
+    SharedPreferences mPrefs = null;
+    Singleton singleton = null;
 
 
 
@@ -90,92 +91,123 @@ public class MainActivity extends AppCompatActivity {
         //Init Views
         initView();
 
-        random = new SecureRandom();
+        mPrefs = this.getSharedPreferences("PREF_NAME", Context.MODE_PRIVATE);
+        singleton = Singleton.getInstance();
+       // String a = mPrefs.getString("AnoID", "");
+
+        identity_Data = singleton.getIdentityData();
 
 
-        //Create database
-        db = new SQLite(this, "data.sqlite", null , 1);
-
-        //Create database table
-
-        db.QueryData(
-                "CREATE TABLE IF NOT EXISTS info(id INTEGER PRIMARY KEY AUTOINCREMENT, user_name TEXT, user_job TEXT)"
-        );
-
-        db.QueryData(
-                "CREATE TABLE IF NOT EXISTS basename(id INTEGER PRIMARY KEY AUTOINCREMENT, basename TEXT, gsk TEXT, jm2 TEXT, cert TEXT)"
-        );
-
-        db.QueryData("INSERT OR REPLACE INTO info VALUES(1,'Thanh Uyen', 'Manager')");
 
 
-//        btnNonce.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                getNonce();
-//            }
-//        });
-//
-//        btnVerify.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                verifySign();
-//            }
-//        });
-//
-//        btnServiceCert.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                //serviceGetCert();
-//                runOnUiThread(new Runnable() {
-//                    @Override
-//                    public void run() {
-//
-//                            new getCS().execute("http://10.0.3.2:8080/verifier/verify");
-//
-//
-//                    }
-//                });
-//
-//            }
-//        });
 
-//        btnUser.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                getIdentity();
-//                //getSPIdentity();
-//            }
-//        });
-//
-//        btnSPB1.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                //signPermisstion();
-//                tam();
-//            }
-//        });
-//
-//        btnUser_b1.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                verifyPermission();
-//            }
-//        });
-         btn_Authentication.setOnClickListener(new View.OnClickListener() {
-             @Override
-             public void onClick(View v) {
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        btn_Authentication.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 // getIdentity();
-             }
-         });
+                Intent i = new Intent(MainActivity.this, ModeActivity.class);
+                startActivity(i);
+            }
+        });
 
         btn_Profile.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-              //  tam();
+
+//                Intent i = new Intent(MainActivity.this, ProfileActivity.class);
+//                startActivity(i);
+                initData();
+               // tam();
             }
         });
 
+        btn_NewCre.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                downloadIdentityData();
+            }
+        });
+
+        btn_Log.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                Intent i = new Intent(MainActivity.this, LogActivity.class);
+                startActivity(i);
+
+            }
+        });
+
+        btnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final KProgressHUD progressLogout = KProgressHUD.create(MainActivity.this)
+                        .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+                        .setLabel("Logging out");
+
+                progressLogout.show();
+
+                Handler handler = new Handler();
+
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent i = new Intent(MainActivity.this, LoginActivity.class);
+                        startActivity(i);
+                        finish();
+                    }
+                }, 300);
+
+
+            }
+        });
+
+
+        try {
+            txtname.setText(getName());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getName() throws JSONException {
+
+        String jsonBank = identity_Data.getLevel_bank();
+
+
+            JSONObject json = new JSONObject(jsonBank);
+
+
+
+
+        return json.getString("user_name");
+    }
+
+    private Boolean exit = false;
+    @Override
+    public void onBackPressed() {
+        if (exit) {
+            finish(); // finish activity
+        } else {
+            Toast.makeText(this, "Press Back again to Exit.",
+                    Toast.LENGTH_SHORT).show();
+            exit = true;
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    exit = false;
+                }
+            }, 3 * 1000);
+
+        }
 
     }
 
@@ -198,13 +230,11 @@ public class MainActivity extends AppCompatActivity {
         //View Init
         btn_Authentication = (FButton) findViewById(R.id.btn_authenticate);
         btn_Profile = (FancyButton) findViewById(R.id.btn_main_profile);
-//        btnNonce = (Button) findViewById(R.id.btnGetNonce);
-//        btnVerify = (Button) findViewById(R.id.btnVerify);
-//        btnServiceCert = (Button) findViewById(R.id.btnSCert);
-//        btnUser = (FButton) findViewById(R.id.btn_user_mode);
-//        btnUser_b1 = (Button) findViewById(R.id.btn_user_ver);
-//        btnSPB1 = (Button) findViewById(R.id.btn_service_sig);
-       // sessionSP = Utils.hexStringToByteArray(Utils.createSessionID());
+        btn_NewCre = (FancyButton) findViewById(R.id.btn_newCre);
+        btn_Log = (FancyButton) findViewById(R.id.btn_Log);
+        btnLogout = (FancyButton) findViewById(R.id.btn_LogOut);
+        txtname = (TextView) findViewById(R.id.txtName);
+
         sessionUser = Utils.createSessionID();
     }
 
@@ -212,6 +242,61 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+    //New Cre
+
+    public void downloadIdentityData(){
+        //Show HUD
+
+        final KProgressHUD progressHUD = KProgressHUD.create(MainActivity.this)
+                .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+                .setLabel("Renew Ano-Id")
+                .setDetailsLabel("Processing");
+        progressHUD.show();
+
+        final Gson gson = new GsonBuilder()
+                .setLenient()
+                .create();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(URL_ISSUER)
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .build();
+
+        IdentityDownload service = retrofit.create(IdentityDownload.class);
+
+        Call<IdentityData> call = service.downloadFile(1);
+
+        call.enqueue(new Callback<IdentityData>() {
+            @Override
+            public void onResponse(Call<IdentityData> call, Response<IdentityData> response) {
+                IdentityData identity_Dataxxx = response.body();
+
+
+                singleton.setIdentityData(identity_Dataxxx);
+                Log.d(TAG+"Ano", "Success");
+
+                Gson gson1 = new Gson();
+                String json = gson1.toJson(identity_Dataxxx);
+                SharedPreferences.Editor prefsEditor = mPrefs.edit();
+                prefsEditor.putString("AnoID",json).commit();
+                identity_Data = identity_Dataxxx;
+
+                progressHUD.dismiss();
+
+
+
+            }
+
+            @Override
+            public void onFailure(Call<IdentityData> call, Throwable t) {
+                Log.d(TAG, "onResponse" + t.getMessage());
+                progressHUD.dismiss();
+            }
+        });
+
+
+
+    }
 
     // NEW META
 
@@ -249,31 +334,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void getSPIdentity(){
-        Gson gson = new GsonBuilder()
-                .setLenient()
-                .create();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(url)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
-
-        IdentitySPAPI service = retrofit.create(IdentitySPAPI.class);
-
-        Call<IdentitySPData> call = service.downloadFile(2);
-
-        call.enqueue(new Callback<IdentitySPData>() {
-            @Override
-            public void onResponse(Call<IdentitySPData> call, Response<IdentitySPData> response) {
-                identity_sp_data = response.body();
-                Log.d("ServiceData", identity_sp_data.getPermission());
-            }
-
-            @Override
-            public void onFailure(Call<IdentitySPData> call, Throwable t) {
-                Log.d("Identity Data SP", "onResponse" + t.getMessage());
-            }
-        });
+//        Gson gson = new GsonBuilder()
+//                .setLenient()
+//                .create();
+//
+//        Retrofit retrofit = new Retrofit.Builder()
+//                .baseUrl(url)
+//                .addConverterFactory(GsonConverterFactory.create(gson))
+//                .build();
+//
+//        IdentitySPAPI service = retrofit.create(IdentitySPAPI.class);
+//
+//        Call<IdentitySPData> call = service.downloadFile(2);
+//
+//        call.enqueue(new Callback<IdentitySPData>() {
+//            @Override
+//            public void onResponse(Call<IdentitySPData> call, Response<IdentitySPData> response) {
+//                identity_sp_data = response.body();
+//                Log.d("ServiceData", identity_sp_data.getPermission());
+//            }
+//
+//            @Override
+//            public void onFailure(Call<IdentitySPData> call, Throwable t) {
+//                Log.d("Identity Data SP", "onResponse" + t.getMessage());
+//            }
+//        });
 
 
     }
@@ -321,62 +406,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    public void tam(){
-        final String sessionIDxx = Utils.createSessionID();
-        Log.d("UserSS", sessionIDxx);
-       // String path = "getCert/"+Service_appID+"/"+sessionID;
-        String path = "getCert/7/"+sessionIDxx;
 
-        Gson gson = new GsonBuilder()
-                    .setLenient()
-                    .create();
-
-        Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(URL_VERIFIER)
-                    .addConverterFactory(GsonConverterFactory.create(gson))
-                    .build();
-
-        onlineCertAPI service = retrofit.create(onlineCertAPI.class);
-
-        Call<onlineCertData> call = service.getCert(path);
-
-        call.enqueue(new Callback<onlineCertData>() {
-            @Override
-            public void onResponse(Call<onlineCertData> call, Response<onlineCertData> response) {
-                onlineCertData data = response.body();
-
-                Log.d("hahaha", data.getSig());
-                Log.d("permission", data.getPermission());
-                Log.d("status", data.getStatus());
-                Log.d("sessionID", data.getSessionId());
-
-
-
-                Log.d("sessionIDUser", sessionIDxx);
-
-
-//                    boolean x = verifyEcDaaSigWrt(ipk,data.getSig(),sessionIDxx,"permission"
-//                            ,data.getPermission().getBytes(),
-//                            sessionIDxx.getBytes());
-                    boolean x = VerifyUserInfo(sessionIDxx,data.getPermission(),data.getSig());
-
-                    if (x == true) {
-                        Log.d("verity at user", "Success" );
-                    }else{
-                        Log.d("verity at user", "Fail" );
-                    }
-
-
-            }
-
-            @Override
-            public void onFailure(Call<onlineCertData> call, Throwable t) {
-                Log.d("onlineCert", "onResponse" + t.getMessage());
-            }
-        });
-
-
-    }
 
     public Boolean VerifyUserInfo(String serviceSessionId, String info, String sigString) {
         Verifier verifier = new Verifier(curve);
