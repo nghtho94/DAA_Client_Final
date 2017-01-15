@@ -16,12 +16,10 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.avast.android.dialogs.fragment.SimpleDialogFragment;
 import com.avast.android.dialogs.iface.IDateDialogListener;
 import com.avast.android.dialogs.iface.IListDialogListener;
 import com.avast.android.dialogs.iface.IMultiChoiceListDialogListener;
@@ -31,7 +29,6 @@ import com.example.tho.daa_moblie_client.CheckBoxView.library.SmoothCheckBox;
 import com.example.tho.daa_moblie_client.Controller.BluetoothService;
 import com.example.tho.daa_moblie_client.Controller.Constants;
 import com.example.tho.daa_moblie_client.Controller.Singleton;
-import com.example.tho.daa_moblie_client.Interfaces.IdentityDownload;
 import com.example.tho.daa_moblie_client.Models.DAA.Authenticator;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer;
 import com.example.tho.daa_moblie_client.Models.DAA.Verifier;
@@ -39,8 +36,6 @@ import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.Models.Utils.Utils;
 import com.example.tho.daa_moblie_client.Models.crypto.BNCurve;
 import com.example.tho.daa_moblie_client.R;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,13 +44,9 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import mehdi.sakout.fancybuttons.FancyButton;
 
-import static com.example.tho.daa_moblie_client.Models.Utils.Config.URL_ISSUER;
+import static com.example.tho.daa_moblie_client.Activities.MainActivity.QRActicity_REQUEST_CODE;
 
 public class BluetoothActivity extends AppCompatActivity implements
         ISimpleDialogListener,
@@ -72,9 +63,17 @@ public class BluetoothActivity extends AppCompatActivity implements
     private static final int REQUEST_ENABLE_BT = 3;
 
     // Layout Views
-    private ListView mConversationView;
-    private EditText mOutEditText;
-    private Button mSendButton, getData;
+
+
+    public SimpleDialogFragment simpleDialogFragment;
+    public String serviceNamexx;
+
+    TextView nameService;
+
+    SmoothCheckBox scb1, scb2, scb3, scb4;
+
+
+
 
     /**
      * Name of the connected device
@@ -105,21 +104,26 @@ public class BluetoothActivity extends AppCompatActivity implements
     Singleton singleton = Singleton.getInstance();
     BNCurve curve = null;
     IdentityData identityData = null;
-    String TPM_ECC_BN_P256 = "TPM_ECC_BN_P256";
+    public String tempxx = null;
+
+    FancyButton QRCcan;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bluetooth);
 
-        //Initdata
+        setTitle("Bluetooth Mode");
 
-        curve = new BNCurve(BNCurve.BNCurveInstantiation.valueOf(TPM_ECC_BN_P256));
+        //Initdata
+        singleton = Singleton.getInstance();
+        curve = singleton.getCurve();
+        identityData = singleton.getIdentityData();
+
        // identityData = singleton.getAnonymousIdentity();
 
 
-        mSendButton = (Button) findViewById(R.id.mSendButton);
-        getData = (Button) findViewById(R.id.btnGetDataBlue);
         // Get local Bluetooth adapter
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -130,62 +134,37 @@ public class BluetoothActivity extends AppCompatActivity implements
         }
 
         //TEST
-        getData.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                downloadIdentityData();
-            }
-        });
+
+        initView();
 
 
-        final SmoothCheckBox scb = (SmoothCheckBox) findViewById(R.id.scb);
-
-        scb.setOnCheckedChangeListener(new SmoothCheckBox.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(SmoothCheckBox checkBox, boolean isChecked) {
-                Log.d("SmoothCheckBox", String.valueOf(isChecked));
-
-                Intent intent = new Intent(BluetoothActivity.this,QRScan.class);
-                startActivity(intent);
-                scb.setVisibility(View.INVISIBLE);
-            }
-        });
 
 
     }
 
-    public void downloadIdentityData() {
-        Gson gson = new GsonBuilder()
-                .setLenient()
-                .create();
+    public void initView(){
+        scb1 = (SmoothCheckBox) findViewById(R.id.scb1);
+        scb2 = (SmoothCheckBox) findViewById(R.id.scb2);
+        scb3 = (SmoothCheckBox) findViewById(R.id.scb3);
+        scb4 = (SmoothCheckBox) findViewById(R.id.scb4);
+        QRCcan = (FancyButton) findViewById(R.id.btn_blue_qr);
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(URL_ISSUER)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build();
+        nameService = (TextView) findViewById(R.id.txt_online_name);
+        nameService.setVisibility(View.INVISIBLE);
 
-        IdentityDownload service = retrofit.create(IdentityDownload.class);
+        scb1.setVisibility(View.INVISIBLE);
+        scb2.setVisibility(View.INVISIBLE);
+        scb3.setVisibility(View.INVISIBLE);
+        scb4.setVisibility(View.INVISIBLE);
 
-        Call<IdentityData> call = service.downloadFile(1);
+        scb1.setClickable(false);
+        scb2.setClickable(false);
+        scb3.setClickable(false);
+        scb4.setClickable(false);
 
-        call.enqueue(new Callback<IdentityData>() {
-            @Override
-            public void onResponse(Call<IdentityData> call, Response<IdentityData> response) {
-                IdentityData identity_Data = response.body();
-                //initData();
-                Log.d("identity", identity_Data.getCredential_level_bank());
-                singleton.setIdentityData(identity_Data);
-                Log.d(TAG + "Ano", "Success");
-                identityData = identity_Data;
-
-            }
-
-            @Override
-            public void onFailure(Call<IdentityData> call, Throwable t) {
-                Log.d(TAG, "onResponse" + t.getMessage());
-            }
-        });
     }
+
+
 
 
 
@@ -201,6 +180,22 @@ public class BluetoothActivity extends AppCompatActivity implements
             // Otherwise, setup the chat session
         } else if (mChatService == null) {
             setupChat();
+        }
+
+            QRCcan.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    qrScanButtonCode();
+                }
+            });
+    }
+
+    public void qrScanButtonCode(){
+        if (mChatService.getState() != BluetoothService.STATE_CONNECTED) {
+            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
+        }else{
+            Intent i = new Intent(BluetoothActivity.this, QRScan.class);
+            startActivity(i);
         }
     }
 
@@ -242,34 +237,34 @@ public class BluetoothActivity extends AppCompatActivity implements
         //mOutEditText.setOnEditorActionListener(mWriteListener);
 
         // Initialize the send button with a listener that for click events
-        mSendButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                // Send a message using content of the edit text widget
-//                View view = getView();
-//                if (null != view) {
-//                    TextView textView = (TextView) view.findViewById(R.id.edit_text_out);
-//                    String message = textView.getText().toString();
-//                    sendMessage(message);
+//        mSendButton.setOnClickListener(new View.OnClickListener() {
+//            public void onClick(View v) {
+//                // Send a message using content of the edit text widget
+////                View view = getView();
+////                if (null != view) {
+////                    TextView textView = (TextView) view.findViewById(R.id.edit_text_out);
+////                    String message = textView.getText().toString();
+////                    sendMessage(message);
+////                }
+//
+//                singleton.setSesssionID(Utils.createSessionID());
+//                Log.d(TAG, "sID" + singleton.getSesssionID());
+//
+//                JSONObject jsonInput = new JSONObject();
+//                try {
+//                    jsonInput.put("state", "sessionID");
+//                    jsonInput.put("sessionID", singleton.getSesssionID());
+//
+//                } catch (JSONException e) {
+//                    e.printStackTrace();
 //                }
-
-                singleton.setSesssionID(Utils.createSessionID());
-                Log.d(TAG, "sID" + singleton.getSesssionID());
-
-                JSONObject jsonInput = new JSONObject();
-                try {
-                    jsonInput.put("state", "sessionID");
-                    jsonInput.put("sessionID", singleton.getSesssionID());
-
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-                Toast.makeText(BluetoothActivity.this, "Send", Toast.LENGTH_SHORT);
-                Log.d("Data", jsonInput.toString());
-                //sendMessage(jsonInput.toString());
-
-                sendMessage("xxx");
-            }
-        });
+//                Toast.makeText(BluetoothActivity.this, "Send", Toast.LENGTH_SHORT);
+//                Log.d("Data", jsonInput.toString());
+//                //sendMessage(jsonInput.toString());
+//
+//                sendMessage("xxx");
+//            }
+//        });
 
         // Initialize the BluetoothService to perform bluetooth connections
         mChatService = new BluetoothService(this, mHandler);
@@ -458,6 +453,36 @@ public class BluetoothActivity extends AppCompatActivity implements
                             Toast.LENGTH_SHORT).show();
                     this.finish();
                 }
+            case QRActicity_REQUEST_CODE :
+                if (resultCode == Activity.RESULT_OK) {
+                    serviceNamexx = data.getExtras().getString("QRContent");
+                    nameService.setVisibility(View.VISIBLE);
+                    scb1.setVisibility(View.VISIBLE);
+                    scb2.setVisibility(View.VISIBLE);
+                    scb3.setVisibility(View.VISIBLE);
+                    scb4.setVisibility(View.VISIBLE);
+
+                    nameService.setText(serviceNamexx);
+
+                    singleton.setSesssionID(Utils.createSessionID());
+                Log.d(TAG, "sID" + singleton.getSesssionID());
+
+                JSONObject jsonInput = new JSONObject();
+                try {
+                    jsonInput.put("state", "sessionID");
+                    jsonInput.put("sessionID", singleton.getSesssionID());
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                Toast.makeText(BluetoothActivity.this, "Send", Toast.LENGTH_SHORT);
+                Log.d("Data", jsonInput.toString());
+                sendMessage(jsonInput.toString());
+                    scb1.setChecked(true);
+
+
+
+                }
         }
     }
 
@@ -516,6 +541,8 @@ public class BluetoothActivity extends AppCompatActivity implements
 
         switch (state) {
             case "permission":
+
+
                 //Get Service sessionID
                 String SPSig = json.getString("sig");
                 String SPsessionID = json.getString("sessionID");
@@ -535,6 +562,7 @@ public class BluetoothActivity extends AppCompatActivity implements
 
                 if (temp == true) {
 
+                    scb2.setChecked(true);
                     //get Info from permisson
                     Log.d("Verify", "OK");
                     String info = identityData.getLevel_bank();
@@ -561,8 +589,20 @@ public class BluetoothActivity extends AppCompatActivity implements
                         e.printStackTrace();
                     }
 
+                    tempxx = jsonInput.toString();
+                    //Show dialog
+                    simpleDialogFragment = (SimpleDialogFragment) SimpleDialogFragment.createBuilder(this, getSupportFragmentManager())
+                            .setTitle("Notice")
+                            .setMessage(serviceNamexx + "would like to know your Name and you Job.")
+                            .setPositiveButtonText("Accept")
+                            .setNegativeButtonText("Deny")
+                            .setCancelableOnTouchOutside(false)
+                            .setRequestCode(4848)
+                            .show();
+
                     //send message
-                    sendMessage(jsonInput.toString());
+
+
 
                 } else {
 
@@ -577,7 +617,7 @@ public class BluetoothActivity extends AppCompatActivity implements
                     }
 
                     //send message
-                    //sendMessage(jsonInput.toString());
+                    sendMessage(jsonInput.toString());
                 }
 
                 break;
@@ -587,6 +627,7 @@ public class BluetoothActivity extends AppCompatActivity implements
                         Toast.LENGTH_SHORT).show();
                 break;
             case "SUCCESS":
+                scb4.setChecked(true);
                 Toast.makeText(this, "Xác thực thành công",
                         Toast.LENGTH_SHORT).show();
 
@@ -666,6 +707,18 @@ public class BluetoothActivity extends AppCompatActivity implements
         if (requestCode == REQUEST_SIMPLE_DIALOG) {
             Toast.makeText(this, "Negative button clicked", Toast.LENGTH_SHORT).show();
         }
+
+
+
+        if ( requestCode == 4848) {
+            SimpleDialogFragment.createBuilder(this, getSupportFragmentManager())
+                    .setTitle("Notice")
+                    .setMessage("Authentication Fail")
+                    .setPositiveButtonText("Accept")
+                    .setCancelableOnTouchOutside(false)
+                    .setRequestCode(9999)
+                    .show();
+        }
     }
 
     @Override
@@ -679,5 +732,17 @@ public class BluetoothActivity extends AppCompatActivity implements
         if (requestCode == REQUEST_SIMPLE_DIALOG) {
             Toast.makeText(this, "Positive button clicked", Toast.LENGTH_SHORT).show();
         }
+
+        if ( requestCode == 4848) {
+            sendMessage(tempxx);
+            scb3.setChecked(true);
+        }
+
+        if ( requestCode == 9999){
+            Intent i = new Intent(BluetoothActivity.this, MainActivity.class);
+            startActivity(i);
+            finish();
+        }
+
     }
 }

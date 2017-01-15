@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final String TAG = "MainActivity";
     //Define
-    public static final Integer QRActicity_REQUEST_CODE = 1;
+    public static final int QRActicity_REQUEST_CODE = 2909;
 
     private BNCurve curve;
 

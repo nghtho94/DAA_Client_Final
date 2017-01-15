@@ -1,5 +1,6 @@
 package com.example.tho.daa_moblie_client.Activities;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -102,6 +103,11 @@ public class QRScan extends AppCompatActivity implements ZBarScannerView.ResultH
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("QRContent", service_name);
+                    setResult(Activity.RESULT_OK, resultIntent);
+                    finishActivity(2909);
 
                     break;
                 default:
