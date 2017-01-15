@@ -13,13 +13,22 @@
 
 
     <TextView
+        android:id="@+id/time"
+        android:layout_weight="250"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|left"
+        android:textSize="15sp"
+        android:textStyle="normal"/>
+
+    <TextView
         android:id="@+id/tv"
         android:layout_weight="100"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_vertical"
         android:textSize="20sp"
-        android:textStyle="bold|italic"/>
+        android:textStyle="bold"/>
 
     <com.example.tho.daa_moblie_client.CheckBoxView.library.SmoothCheckBox
         android:id="@+id/scb"

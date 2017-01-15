@@ -18,6 +18,7 @@ import com.dd.CircularProgressButton;
 import com.example.tho.daa_moblie_client.Controller.Singleton;
 import com.example.tho.daa_moblie_client.Interfaces.IdentityDownload;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
+import com.example.tho.daa_moblie_client.Models.Utils.Config;
 import com.example.tho.daa_moblie_client.Models.crypto.BNCurve;
 import com.example.tho.daa_moblie_client.R;
 import com.google.gson.Gson;
@@ -175,7 +176,7 @@ public class LoginActivity extends AppCompatActivity {
             }
         }else{
 
-            if (pd.equals("Bob")){
+            if (pd.equals("huutho")){
 
                 return true;
             }else{
@@ -228,7 +229,7 @@ public class LoginActivity extends AppCompatActivity {
 
         IdentityDownload service = retrofit.create(IdentityDownload.class);
 
-        Call<IdentityData> call = service.downloadFile(1);
+        Call<IdentityData> call = service.downloadFile(Config.APP_ID);
 
         call.enqueue(new Callback<IdentityData>() {
             @Override

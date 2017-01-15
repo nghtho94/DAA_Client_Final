@@ -60,8 +60,9 @@
         <activity android:name=".Activities.SettingActivity" />
         <activity android:name=".Activities.ModeActivity" />
         <activity android:name=".Activities.ProfileActivity" />
-        <activity android:name=".Activities.LogActivity"></activity>
-        <activity android:name=".Activities.OnlineActivity"></activity>
+        <activity android:name=".Activities.LogActivity" />
+        <activity android:name=".Activities.OnlineActivity" />
+        <activity android:name=".Activities.LogDetailActivity"></activity>
     </application>
 
 </manifest>

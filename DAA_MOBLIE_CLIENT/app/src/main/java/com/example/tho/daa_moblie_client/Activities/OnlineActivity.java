@@ -1,12 +1,16 @@
 package com.example.tho.daa_moblie_client.Activities;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.avast.android.dialogs.fragment.SimpleDialogFragment;
 import com.avast.android.dialogs.iface.IDateDialogListener;
 import com.avast.android.dialogs.iface.IListDialogListener;
 import com.avast.android.dialogs.iface.IMultiChoiceListDialogListener;
@@ -19,6 +23,7 @@ import com.example.tho.daa_moblie_client.Interfaces.onlineSendSig;
 import com.example.tho.daa_moblie_client.Models.DAA.Authenticator;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer;
 import com.example.tho.daa_moblie_client.Models.DAA.Verifier;
+import com.example.tho.daa_moblie_client.Models.RequestModels.Init.Bean;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.Models.ResponseData.onlineCertData;
 import com.example.tho.daa_moblie_client.Models.Utils.Utils;
@@ -63,6 +68,9 @@ public class OnlineActivity extends AppCompatActivity implements
     BNCurve curve;
     Issuer.IssuerPublicKey ipk;
 
+    SimpleDialogFragment simpleDialogFragment = null;
+    SharedPreferences mPrefs = null;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +78,7 @@ public class OnlineActivity extends AppCompatActivity implements
 
         setTitle("Authenticating");
 
+        mPrefs = this.getSharedPreferences("PREF_NAME", Context.MODE_PRIVATE);
         singleton = Singleton.getInstance();
         identity_Data = singleton.getIdentityData();
         curve = singleton.getCurve();
@@ -90,6 +99,8 @@ public class OnlineActivity extends AppCompatActivity implements
         cb3 = (SmoothCheckBox) findViewById(R.id.cb_s3);
         cb4 = (SmoothCheckBox) findViewById(R.id.cbs4);
 
+        txtName.setText("Service name: "+serviceName);
+
 
         //Disable click
         cb1.setClickable(false);
@@ -97,6 +108,7 @@ public class OnlineActivity extends AppCompatActivity implements
         cb3.setClickable(false);
         cb4.setClickable(false);
 
+        tam();
 
     }
 
@@ -107,6 +119,8 @@ public class OnlineActivity extends AppCompatActivity implements
         hud = KProgressHUD.create(OnlineActivity.this)
                 .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
                 .setLabel("Authenticating");
+
+        hud.show();
 
 
     }
@@ -156,8 +170,18 @@ public class OnlineActivity extends AppCompatActivity implements
 
                 if (x == true) {
                     Log.d("verity at user", "Success" );
-                    sendSig(data.getSessionId(), sessionIDxx);
+                    //sendSig(data.getSessionId(), sessionIDxx);
                     cb2.setChecked(true);
+
+                    hud.dismiss();
+                    simpleDialogFragment = (SimpleDialogFragment) SimpleDialogFragment.createBuilder(OnlineActivity.this, getSupportFragmentManager())
+                            .setTitle("Notice")
+                            .setMessage(serviceName + " would like to know \n - Name. \n - Job.")
+                            .setPositiveButtonText("Accept")
+                            .setNegativeButtonText("Deny")
+                            .setCancelableOnTouchOutside(false)
+                            .setRequestCode(4848)
+                            .show();
                 }else{
                     Log.d("verity at user", "Fail" );
                 }
@@ -172,6 +196,50 @@ public class OnlineActivity extends AppCompatActivity implements
         });
 
 
+    }
+
+    public void test(){
+        final Handler handler = new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                cb3.setChecked(true);
+
+                Handler handler1 = new Handler();
+                handler1.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        cb4.setChecked(true);
+                        hand();
+                    }
+                },1500);
+            }
+        },2000);
+    }
+
+    public void hand(){
+        Date date = new Date();
+        Bean bean = new Bean(serviceName, date.toString() ,true);
+        singleton.addLog(bean);
+
+        Gson gson1 = new Gson();
+        String jsonzx = gson1.toJson(singleton.getmList());
+        SharedPreferences.Editor prefsEditor = mPrefs.edit();
+        prefsEditor.putString("LogList",jsonzx).commit();
+        Handler handler = new Handler();
+        hud.dismiss();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                SimpleDialogFragment.createBuilder(OnlineActivity.this, getSupportFragmentManager())
+                        .setTitle("Notice")
+                        .setMessage("Authentication Success")
+                        .setPositiveButtonText("DONE")
+                        .setCancelableOnTouchOutside(false)
+                        .setRequestCode(9929)
+                        .show();
+            }
+        },300);
     }
 
     public void sendSig(String sesssionid, String userSs){
@@ -255,6 +323,15 @@ public class OnlineActivity extends AppCompatActivity implements
 
         if (requestCode == REQUEST_SIMPLE_DIALOG) {
             Toast.makeText(this, "Positive button clicked", Toast.LENGTH_SHORT).show();
+        }
+
+        if( requestCode == 4848){
+            hud.show();
+            test();
+        }
+
+        if (requestCode == 9929){
+            finish();
         }
     }
 

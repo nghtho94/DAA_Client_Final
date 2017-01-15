@@ -4,7 +4,9 @@ import android.app.ActionBar;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -32,10 +34,13 @@ import com.example.tho.daa_moblie_client.Controller.Singleton;
 import com.example.tho.daa_moblie_client.Models.DAA.Authenticator;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer;
 import com.example.tho.daa_moblie_client.Models.DAA.Verifier;
+import com.example.tho.daa_moblie_client.Models.RequestModels.Init.Bean;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.Models.Utils.Utils;
 import com.example.tho.daa_moblie_client.Models.crypto.BNCurve;
 import com.example.tho.daa_moblie_client.R;
+import com.google.gson.Gson;
+import com.kaopiz.kprogresshud.KProgressHUD;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,8 +50,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import mehdi.sakout.fancybuttons.FancyButton;
-
-import static com.example.tho.daa_moblie_client.Activities.MainActivity.QRActicity_REQUEST_CODE;
 
 public class BluetoothActivity extends AppCompatActivity implements
         ISimpleDialogListener,
@@ -71,7 +74,9 @@ public class BluetoothActivity extends AppCompatActivity implements
     TextView nameService;
 
     SmoothCheckBox scb1, scb2, scb3, scb4;
+    TextView  txt1, txt2, txt3, txt4;
 
+    KProgressHUD hud;
 
 
 
@@ -107,7 +112,7 @@ public class BluetoothActivity extends AppCompatActivity implements
     public String tempxx = null;
 
     FancyButton QRCcan;
-
+    SharedPreferences mPrefs = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,10 +121,16 @@ public class BluetoothActivity extends AppCompatActivity implements
 
         setTitle("Bluetooth Mode");
 
+
+        mPrefs = this.getSharedPreferences("PREF_NAME", Context.MODE_PRIVATE);
         //Initdata
         singleton = Singleton.getInstance();
         curve = singleton.getCurve();
         identityData = singleton.getIdentityData();
+
+        hud = KProgressHUD.create(BluetoothActivity.this)
+                .setStyle(KProgressHUD.Style.SPIN_INDETERMINATE)
+                .setLabel("Authenticating");
 
        // identityData = singleton.getAnonymousIdentity();
 
@@ -148,6 +159,11 @@ public class BluetoothActivity extends AppCompatActivity implements
         scb3 = (SmoothCheckBox) findViewById(R.id.scb3);
         scb4 = (SmoothCheckBox) findViewById(R.id.scb4);
         QRCcan = (FancyButton) findViewById(R.id.btn_blue_qr);
+        txt4 = (TextView) findViewById(R.id.txt_blue_4);
+        txt2 = (TextView) findViewById(R.id.txt_blue_2);
+        txt3 = (TextView) findViewById(R.id.txt_blue_3);
+        txt1 = (TextView) findViewById(R.id.txt_blue_1);
+
 
         nameService = (TextView) findViewById(R.id.txt_online_name);
         nameService.setVisibility(View.INVISIBLE);
@@ -156,6 +172,11 @@ public class BluetoothActivity extends AppCompatActivity implements
         scb2.setVisibility(View.INVISIBLE);
         scb3.setVisibility(View.INVISIBLE);
         scb4.setVisibility(View.INVISIBLE);
+
+        txt1.setVisibility(View.INVISIBLE);
+        txt2.setVisibility(View.INVISIBLE);
+        txt3.setVisibility(View.INVISIBLE);
+        txt4.setVisibility(View.INVISIBLE);
 
         scb1.setClickable(false);
         scb2.setClickable(false);
@@ -195,7 +216,7 @@ public class BluetoothActivity extends AppCompatActivity implements
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
         }else{
             Intent i = new Intent(BluetoothActivity.this, QRScan.class);
-            startActivity(i);
+            startActivityForResult(i,2929);
         }
     }
 
@@ -389,7 +410,7 @@ public class BluetoothActivity extends AppCompatActivity implements
                     String readMessage = new String(readBuf, 0, msg.arg1);
 
                     Log.d("message", readMessage);
-                    Toast.makeText(BluetoothActivity.this, readMessage, Toast.LENGTH_LONG).show();
+
                     try {
                         messageHandle(readMessage);
                     } catch (JSONException e) {
@@ -453,14 +474,24 @@ public class BluetoothActivity extends AppCompatActivity implements
                             Toast.LENGTH_SHORT).show();
                     this.finish();
                 }
-            case QRActicity_REQUEST_CODE :
+            case 2929 :
+
+
                 if (resultCode == Activity.RESULT_OK) {
-                    serviceNamexx = data.getExtras().getString("QRContent");
+
+
+                    hud.show();
+
+                    serviceNamexx = "Service name: " + data.getExtras().getString("QRContent");
                     nameService.setVisibility(View.VISIBLE);
                     scb1.setVisibility(View.VISIBLE);
                     scb2.setVisibility(View.VISIBLE);
                     scb3.setVisibility(View.VISIBLE);
                     scb4.setVisibility(View.VISIBLE);
+                    txt1.setVisibility(View.VISIBLE);
+                    txt2.setVisibility(View.VISIBLE);
+                    txt3.setVisibility(View.VISIBLE);
+                    txt4.setVisibility(View.VISIBLE);
 
                     nameService.setText(serviceNamexx);
 
@@ -479,6 +510,7 @@ public class BluetoothActivity extends AppCompatActivity implements
                 Log.d("Data", jsonInput.toString());
                 sendMessage(jsonInput.toString());
                     scb1.setChecked(true);
+
 
 
 
@@ -565,12 +597,12 @@ public class BluetoothActivity extends AppCompatActivity implements
                     scb2.setChecked(true);
                     //get Info from permisson
                     Log.d("Verify", "OK");
-                    String info = identityData.getLevel_bank();
+                    String info = identityData.getLevel_service();
 
                     //CreateSig
                     Authenticator.EcDaaSignature signature = createSig(info,
-                            identityData.getCredential_level_bank(),
-                            identityData.getGsk_level_bank(),
+                            identityData.getCredential_level_service(),
+                            identityData.getGsk_level_service(),
                             SPsessionID,
                             "verification", identityData.getIpk());
 
@@ -582,18 +614,20 @@ public class BluetoothActivity extends AppCompatActivity implements
                     JSONObject jsonInput = new JSONObject();
                     try {
                         jsonInput.put("state", s);
-                        jsonInput.put("info", identityData.getLevel_bank());
+                        jsonInput.put("info", identityData.getLevel_service());
                         jsonInput.put("sig", sigString);
 
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
 
+
+                    hud.dismiss();
                     tempxx = jsonInput.toString();
                     //Show dialog
                     simpleDialogFragment = (SimpleDialogFragment) SimpleDialogFragment.createBuilder(this, getSupportFragmentManager())
                             .setTitle("Notice")
-                            .setMessage(serviceNamexx + "would like to know your Name and you Job.")
+                            .setMessage(serviceNamexx + " would like to know \n - Name. \n - Job.")
                             .setPositiveButtonText("Accept")
                             .setNegativeButtonText("Deny")
                             .setCancelableOnTouchOutside(false)
@@ -623,13 +657,38 @@ public class BluetoothActivity extends AppCompatActivity implements
                 break;
             case "CANCEL":
                 singleton.setSesssionID(null);
-                Toast.makeText(this, "Xác thực thất bại",
-                        Toast.LENGTH_SHORT).show();
+
                 break;
             case "SUCCESS":
+                hud.dismiss();
                 scb4.setChecked(true);
-                Toast.makeText(this, "Xác thực thành công",
-                        Toast.LENGTH_SHORT).show();
+
+                Handler handler = new Handler();
+                //Finish Activity
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        SimpleDialogFragment.createBuilder(BluetoothActivity.this, getSupportFragmentManager())
+                                .setTitle("Notice")
+                                .setMessage("Authentication Success")
+                                .setPositiveButtonText("DONE")
+                                .setCancelableOnTouchOutside(false)
+                                .setRequestCode(9929)
+                                .show();
+                    }
+                },300);
+
+                Date date = new Date();
+                Bean bean = new Bean(serviceNamexx, date.toString() ,true);
+                singleton.addLog(bean);
+
+                Gson gson1 = new Gson();
+                String jsonzx = gson1.toJson(singleton.getmList());
+                SharedPreferences.Editor prefsEditor = mPrefs.edit();
+                prefsEditor.putString("LogList",jsonzx).commit();
+                break;
+            default:
+                Log.d(TAG, "Nguy roi");
 
 
         }
@@ -734,15 +793,20 @@ public class BluetoothActivity extends AppCompatActivity implements
         }
 
         if ( requestCode == 4848) {
+            hud.show();
             sendMessage(tempxx);
             scb3.setChecked(true);
         }
 
-        if ( requestCode == 9999){
-            Intent i = new Intent(BluetoothActivity.this, MainActivity.class);
-            startActivity(i);
+        if ( requestCode == 9999 ){
             finish();
         }
+
+        if (requestCode == 9929) {
+            finish();
+        }
+
+
 
     }
 }

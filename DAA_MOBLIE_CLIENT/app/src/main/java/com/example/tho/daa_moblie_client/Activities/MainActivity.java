@@ -19,20 +19,26 @@ import com.example.tho.daa_moblie_client.Models.DAA.Authenticator;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer.IssuerPublicKey;
 import com.example.tho.daa_moblie_client.Models.DAA.Verifier;
+import com.example.tho.daa_moblie_client.Models.RequestModels.Init.Bean;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentitySPData;
+import com.example.tho.daa_moblie_client.Models.Utils.Config;
 import com.example.tho.daa_moblie_client.Models.Utils.Utils;
 import com.example.tho.daa_moblie_client.Models.crypto.BNCurve;
 import com.example.tho.daa_moblie_client.R;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.kaopiz.kprogresshud.KProgressHUD;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Type;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 import info.hoang8f.widget.FButton;
 import mehdi.sakout.fancybuttons.FancyButton;
@@ -99,9 +105,20 @@ public class MainActivity extends AppCompatActivity {
 
 
 
+        prepareLogData();
 
+    }
 
+    public void prepareLogData(){
+        String listLog = mPrefs.getString("LogList", "");
 
+        if (listLog.equals("")) {
+            //singleton.setmList(new ArrayList<>());
+        }else{
+            Type listType = new TypeToken<List<Bean>>(){}.getType();
+            ArrayList<Bean> list = new Gson().fromJson(listLog,listType);
+            singleton.setmList(list);
+        }
     }
 
     @Override
@@ -121,10 +138,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-//                Intent i = new Intent(MainActivity.this, ProfileActivity.class);
-//                startActivity(i);
-                initData();
-               // tam();
+                Intent i = new Intent(MainActivity.this, ProfileActivity.class);
+                startActivity(i);
             }
         });
 
@@ -264,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
 
         IdentityDownload service = retrofit.create(IdentityDownload.class);
 
-        Call<IdentityData> call = service.downloadFile(1);
+        Call<IdentityData> call = service.downloadFile(Config.APP_ID);
 
         call.enqueue(new Callback<IdentityData>() {
             @Override

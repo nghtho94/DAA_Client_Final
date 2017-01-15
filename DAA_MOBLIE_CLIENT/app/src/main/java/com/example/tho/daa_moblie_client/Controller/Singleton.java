@@ -1,8 +1,11 @@
 package com.example.tho.daa_moblie_client.Controller;
 
 
+import com.example.tho.daa_moblie_client.Models.RequestModels.Init.Bean;
 import com.example.tho.daa_moblie_client.Models.RequestModels.Init.IdentityData;
 import com.example.tho.daa_moblie_client.Models.crypto.BNCurve;
+
+import java.util.ArrayList;
 
 public class Singleton {
 
@@ -11,6 +14,7 @@ public class Singleton {
     private static BNCurve curve;
     private static String sesssionID;
     private static IdentityData identityData;
+    private ArrayList<Bean> mList = new ArrayList<>();
 
 
     /* A private Constructor prevents any other
@@ -24,6 +28,17 @@ public class Singleton {
     }
 
 
+    public ArrayList<Bean> getmList() {
+        return mList;
+    }
+
+    public void addLog(Bean bean) {
+        this.mList.add(bean);
+    }
+
+    public void setmList(ArrayList<Bean> mList) {
+        this.mList = mList;
+    }
 
     public static void setCurve(BNCurve curve) {
         Singleton.curve = curve;
@@ -53,4 +68,6 @@ public class Singleton {
     protected static void demoMethod( ) {
         System.out.println("demoMethod for singleton");
     }
+
+
 }

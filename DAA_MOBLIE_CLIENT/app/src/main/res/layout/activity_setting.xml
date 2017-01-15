@@ -19,12 +19,12 @@
         android:layout_height="wrap_content" />
 
     <mehdi.sakout.fancybuttons.FancyButton
-        android:id="@+id/btn_setting_logout"
+        android:id="@+id/btn_setting_change_pw"
         android:layout_marginTop="0dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="10dp"
-        android:paddingLeft="-250dp"
+        android:paddingLeft="-181dp"
         android:paddingRight="0dp"
         android:paddingTop="10dp"
         fancy:fb_borderColor="#000000"
@@ -35,7 +35,7 @@
         fancy:fb_fontIconSize = "25dp"
         fancy:fb_iconPaddingLeft = "0dp"
         fancy:fb_radius="0dp"
-        fancy:fb_text=" Log out"
+        fancy:fb_text=" Change password"
         fancy:fb_textColor="#000000"
 
         />
