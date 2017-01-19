@@ -482,7 +482,8 @@ public class BluetoothActivity extends AppCompatActivity implements
 
                     hud.show();
 
-                    serviceNamexx = "Service name: " + data.getExtras().getString("QRContent");
+                    serviceNamexx = data.getExtras().getString("QRContent");
+                    String serviceNamexxx = "Service name: " + data.getExtras().getString("QRContent");
                     nameService.setVisibility(View.VISIBLE);
                     scb1.setVisibility(View.VISIBLE);
                     scb2.setVisibility(View.VISIBLE);
@@ -493,7 +494,7 @@ public class BluetoothActivity extends AppCompatActivity implements
                     txt3.setVisibility(View.VISIBLE);
                     txt4.setVisibility(View.VISIBLE);
 
-                    nameService.setText(serviceNamexx);
+                    nameService.setText(serviceNamexxx);
 
                     singleton.setSesssionID(Utils.createSessionID());
                 Log.d(TAG, "sID" + singleton.getSesssionID());

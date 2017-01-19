@@ -19,7 +19,7 @@ import com.avast.android.dialogs.iface.ISimpleDialogListener;
 import com.example.tho.daa_moblie_client.CheckBoxView.library.SmoothCheckBox;
 import com.example.tho.daa_moblie_client.Controller.Singleton;
 import com.example.tho.daa_moblie_client.Interfaces.onlineCertAPI;
-import com.example.tho.daa_moblie_client.Interfaces.onlineSendSig;
+import com.example.tho.daa_moblie_client.Interfaces.testAPI;
 import com.example.tho.daa_moblie_client.Models.DAA.Authenticator;
 import com.example.tho.daa_moblie_client.Models.DAA.Issuer;
 import com.example.tho.daa_moblie_client.Models.DAA.Verifier;
@@ -33,10 +33,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.kaopiz.kprogresshud.KProgressHUD;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -70,6 +75,8 @@ public class OnlineActivity extends AppCompatActivity implements
 
     SimpleDialogFragment simpleDialogFragment = null;
     SharedPreferences mPrefs = null;
+    String userSSIDxx, servicessID;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +135,7 @@ public class OnlineActivity extends AppCompatActivity implements
     public void tam(){
         final String sessionIDxx = Utils.createSessionID();
         Log.d("UserSesstionID", sessionIDxx);
+        userSSIDxx = sessionIDxx;
         // String path = "getCert/"+Service_appID+"/"+sessionID;
         String path = "getCert/"+ appID +"/" +sessionIDxx;
 
@@ -156,6 +164,7 @@ public class OnlineActivity extends AppCompatActivity implements
                 Log.d("permission", data.getPermission());
                 Log.d("status", data.getStatus());
                 Log.d("ssID Service", data.getSessionId());
+                servicessID = data.getSessionId();
 
 
                 boolean x = false;
@@ -170,7 +179,11 @@ public class OnlineActivity extends AppCompatActivity implements
 
                 if (x == true) {
                     Log.d("verity at user", "Success" );
-                    //sendSig(data.getSessionId(), sessionIDxx);
+//                    try {
+//                        sendSig(data.getSessionId(), sessionIDxx);
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+//                    }
                     cb2.setChecked(true);
 
                     hud.dismiss();
@@ -242,7 +255,7 @@ public class OnlineActivity extends AppCompatActivity implements
         },300);
     }
 
-    public void sendSig(String sesssionid, String userSs){
+    public void sendSig(String sesssionid, String userSs) throws JSONException {
         String url = "verify/"+appID+"/" + userSs;
         Authenticator.EcDaaSignature signatureSPx = createSig(identity_Data.getLevel_service(),
                 identity_Data.getCredential_level_service(),
@@ -254,27 +267,62 @@ public class OnlineActivity extends AppCompatActivity implements
         Log.d("Sig" , Utils.bytesToHex(signatureSPx.encode(curve)));
         Log.d("infomation", identity_Data.getLevel_service());
 
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("information", identity_Data.getLevel_service());
+        jsonObject.put("sig", Utils.bytesToHex(signatureSPx.encode(curve)));
+        jsonObject.put("status", "ok");
+
+        //Log.d("Khoa cc", jsonObject.toString());
+
+        RequestBody m = RequestBody.create(MediaType.parse("text/plain"), jsonObject.toString());
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(URL_VERIFIER)
                 .addConverterFactory(ScalarsConverterFactory.create())
                 // add other factories here, if needed.
                 .build();
-        onlineSendSig service = retrofit.create(onlineSendSig.class);
 
-        Call<String> call = service.sendsig(url,Utils.bytesToHex(signatureSPx.encode(curve)),identity_Data.getLevel_service()
-                , "ok");
+        testAPI service = retrofit.create(testAPI.class);
+        Call<String> call = service.runpls(url, m);
 
         call.enqueue(new Callback<String>() {
             @Override
             public void onResponse(Call<String> call, Response<String> response) {
-               // Log.d(TAG + "xx", response.body());
+                Log.d(TAG + "xx", response.body());
+                if (response.body() == "success"){
+                    cb4.setChecked(true);
+                    Date date = new Date();
+                    Bean bean = new Bean(serviceName, date.toString() ,true);
+                    singleton.addLog(bean);
+
+                    Gson gson1 = new Gson();
+                    String jsonzx = gson1.toJson(singleton.getmList());
+                    SharedPreferences.Editor prefsEditor = mPrefs.edit();
+                    prefsEditor.putString("LogList",jsonzx).commit();
+                }
             }
 
             @Override
             public void onFailure(Call<String> call, Throwable t) {
-                //Log.d("onlineCert", "onResponse" + t.getMessage());
+                Log.d("onlineCert", "onResponse" + t.getMessage());
             }
         });
+//        onlineSendSig service = retrofit.create(onlineSendSig.class);
+//
+//        Call<String> call = service.sendsig(url,Utils.bytesToHex(signatureSPx.encode(curve)),identity_Data.getLevel_service()
+//                , "ok");
+//
+//        call.enqueue(new Callback<String>() {
+//            @Override
+//            public void onResponse(Call<String> call, Response<String> response) {
+//               // Log.d(TAG + "xx", response.body());
+//            }
+//
+//            @Override
+//            public void onFailure(Call<String> call, Throwable t) {
+//                //Log.d("onlineCert", "onResponse" + t.getMessage());
+//            }
+//        });
 
     }
 
@@ -327,7 +375,12 @@ public class OnlineActivity extends AppCompatActivity implements
 
         if( requestCode == 4848){
             hud.show();
-            test();
+            try {
+                sendSig(servicessID,userSSIDxx);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+            //test();
         }
 
         if (requestCode == 9929){
